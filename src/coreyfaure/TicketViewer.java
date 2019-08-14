@@ -1,10 +1,14 @@
 package coreyfaure;
 
+import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JTextField;
+import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -14,6 +18,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.awt.event.ActionListener;
@@ -27,8 +33,9 @@ public class TicketViewer {
 	static String dataPath = "L:\\LH Ticket Analysis\\TicketViewerData.txt";
 	static String truckPath = "L:\\TruckRes\\";
 	static String lhPicsPath = "L:\\LH Pics\\";
+	static String API_KEY = "PUT-KEY-HERE";
 
-	private JFrame frmBensSuperFantastical;
+	private JFrame viewerWindow;
 	static JTextField fieldSearch;
 	static JLabel lblTicket;
 	static JLabel lblImage1;
@@ -57,10 +64,13 @@ public class TicketViewer {
 	private static JLabel textLatitude;
 	private static JLabel textLongitude;
 	private static JLabel textVoided;
+	private static JLabel lblImageSatellite;
+	private static JLabel lblImageRoad;
 
 	private static String imageLinkCert = "";
 	private static String imageLinkBefore = "";
 	private static String imageLinkAfter = "";
+	private static String ticketCoords = "";
 
 	/**
 	 * Launch the application.
@@ -79,7 +89,7 @@ public class TicketViewer {
 			public void run() {
 				try {
 					TicketViewer window = new TicketViewer();
-					window.frmBensSuperFantastical.setVisible(true);
+					window.viewerWindow.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -122,6 +132,7 @@ public class TicketViewer {
 			dataPath = "L:\\LH Ticket Analysis\\TicketViewerData.txt\n";
 			truckPath = "L:\\TruckRes\\\n";
 			lhPicsPath = "L:\\LH Pics2\\\n";
+			API_KEY = "PUT-KEY-HERE";
 			createConfig();
 		}
 		Scanner s = null;
@@ -143,6 +154,8 @@ public class TicketViewer {
 			case "LHPICS_PATH":
 				lhPicsPath = line.split("=")[1];
 				break;
+			case "API_KEY":
+				API_KEY = line.split("=")[1];
 			default:
 				break;
 			}
@@ -150,13 +163,12 @@ public class TicketViewer {
 	}
 
 	private static void createConfig() throws IOException {
-		// TODO Auto-generated method stub
 		FileWriter fw = new FileWriter("config.cfg");
 
 		fw.write("DATA_PATH=" + dataPath);
 		fw.write("TRUCK_PATH=" + truckPath);
 		fw.write("LHPICS_PATH=" + lhPicsPath);
-
+		fw.write("API_KEY=" + API_KEY);
 		fw.close();
 	}
 
@@ -192,6 +204,7 @@ public class TicketViewer {
 		imageLinkCert = truckPath + t.truck + " 001.jpg";
 		imageLinkBefore = lhPicsPath + t.before + ".jpg";
 		imageLinkAfter = lhPicsPath + t.ticket + ".jpg";
+		ticketCoords = t.latitude+","+t.longitude;
 		lblImage1.setIcon(
 				TicketImporter.getImageIconFromFile(imageLinkBefore, lblImage1.getWidth(), lblImage1.getHeight()));
 		lblImage2.setIcon(
@@ -200,6 +213,8 @@ public class TicketViewer {
 				TicketImporter.getImageIconFromFile(imageLinkCert, lblImageCert.getWidth(), lblImageCert.getHeight()));
 		lblImageTruck.setIcon(TicketImporter.getImageIconFromFile(truckPath + t.truck + ".jpg",
 				lblImageTruck.getWidth(), lblImageTruck.getHeight()));
+		lblImageSatellite.setIcon(new ImageIcon(ImageIO.read(StaticMapURL.getURLSatellite(t, API_KEY))));
+		lblImageRoad.setIcon(new ImageIcon(ImageIO.read(StaticMapURL.getURLRoadmap(t, API_KEY))));
 
 	}
 
@@ -217,16 +232,16 @@ public class TicketViewer {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		frmBensSuperFantastical = new JFrame();
-		frmBensSuperFantastical.setTitle("Ticket Information Viewer");
-		frmBensSuperFantastical.setBounds(100, 100, 1000, 657);
-		frmBensSuperFantastical.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frmBensSuperFantastical.getContentPane().setLayout(null);
+		viewerWindow = new JFrame();
+		viewerWindow.setTitle("Ticket Information Viewer");
+		viewerWindow.setBounds(100, 100, 1000, 900);
+		viewerWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		viewerWindow.getContentPane().setLayout(null);
 
 		fieldSearch = new JTextField();
 		fieldSearch.setToolTipText("Ticket Number");
 		fieldSearch.setBounds(10, 11, 271, 20);
-		frmBensSuperFantastical.getContentPane().add(fieldSearch);
+		viewerWindow.getContentPane().add(fieldSearch);
 		fieldSearch.setColumns(10);
 
 		// search for ticket with search button
@@ -243,33 +258,33 @@ public class TicketViewer {
 
 					}
 				} else {
-					JOptionPane.showMessageDialog(frmBensSuperFantastical, "Ticket not found in data file.");
+					JOptionPane.showMessageDialog(viewerWindow, "Ticket not found in data file.");
 				}
 				fieldSearch.setText("");
 			}
 		});
 		btnSearch.setBounds(291, 10, 89, 23);
-		frmBensSuperFantastical.getContentPane().add(btnSearch);
+		viewerWindow.getContentPane().add(btnSearch);
 
 		JLabel lblTicketLabel = new JLabel("Ticket #:");
 		lblTicketLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		lblTicketLabel.setBounds(10, 42, 64, 20);
-		frmBensSuperFantastical.getContentPane().add(lblTicketLabel);
+		viewerWindow.getContentPane().add(lblTicketLabel);
 
 		lblTicket = new JLabel("000000-000000000000");
 		lblTicket.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		lblTicket.setBounds(84, 42, 296, 20);
-		frmBensSuperFantastical.getContentPane().add(lblTicket);
+		viewerWindow.getContentPane().add(lblTicket);
 
 		JLabel lblBeforeImage = new JLabel("Before Image");
 		lblBeforeImage.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		lblBeforeImage.setBounds(10, 73, 162, 20);
-		frmBensSuperFantastical.getContentPane().add(lblBeforeImage);
+		viewerWindow.getContentPane().add(lblBeforeImage);
 
 		JLabel lblAfterImage = new JLabel("After Image");
 		lblAfterImage.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		lblAfterImage.setBounds(291, 73, 130, 20);
-		frmBensSuperFantastical.getContentPane().add(lblAfterImage);
+		viewerWindow.getContentPane().add(lblAfterImage);
 
 		lblImage1 = new JLabel("image1");
 		lblImage1.addMouseListener(new MouseAdapter() {
@@ -279,13 +294,12 @@ public class TicketViewer {
 				try {
 					Desktop.getDesktop().open(afterBefore);
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
 		});
 		lblImage1.setBounds(10, 98, 250, 250);
-		frmBensSuperFantastical.getContentPane().add(lblImage1);
+		viewerWindow.getContentPane().add(lblImage1);
 
 		lblImage2 = new JLabel("image2");
 		lblImage2.addMouseListener(new MouseAdapter() {
@@ -295,13 +309,12 @@ public class TicketViewer {
 				try {
 					Desktop.getDesktop().open(afterLink);
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
 		});
 		lblImage2.setBounds(291, 98, 250, 250);
-		frmBensSuperFantastical.getContentPane().add(lblImage2);
+		viewerWindow.getContentPane().add(lblImage2);
 
 		lblImageCert = new JLabel("cert image");
 		lblImageCert.addMouseListener(new MouseAdapter() {
@@ -311,115 +324,142 @@ public class TicketViewer {
 				try {
 					Desktop.getDesktop().open(certLink);
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
 		});
 		lblImageCert.setBounds(10, 390, 250, 219);
-		frmBensSuperFantastical.getContentPane().add(lblImageCert);
+		viewerWindow.getContentPane().add(lblImageCert);
 
 		lblImageTruck = new JLabel("truck image");
 		lblImageTruck.setBounds(291, 390, 250, 219);
-		frmBensSuperFantastical.getContentPane().add(lblImageTruck);
+		viewerWindow.getContentPane().add(lblImageTruck);
+		
+		lblImageSatellite = new JLabel("satellite image");
+		lblImageSatellite.setBounds(10, 625, 450, 200);
+		lblImageSatellite.setBorder(BorderFactory.createMatteBorder(
+                1, 1, 1, 1, Color.gray));
+		lblImageSatellite.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				try {
+					try {
+						Desktop.getDesktop().browse(new URI("http://www.google.com/maps/search/"+ticketCoords));
+					} catch (URISyntaxException e1) {
+						e1.printStackTrace();
+					}
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+		viewerWindow.getContentPane().add(lblImageSatellite);
+		
+		lblImageRoad = new JLabel("road image");
+		lblImageRoad.setBounds(460, 625, 450, 200);
+		lblImageRoad.setBorder(BorderFactory.createMatteBorder(
+                1, 1, 1, 1, Color.gray));
+		viewerWindow.getContentPane().add(lblImageRoad);
 
 		JLabel lblCert = new JLabel("Certification");
 		lblCert.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		lblCert.setBounds(10, 365, 117, 20);
-		frmBensSuperFantastical.getContentPane().add(lblCert);
+		viewerWindow.getContentPane().add(lblCert);
 
 		lblTruck = new JLabel("Truck");
 		lblTruck.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		lblTruck.setBounds(291, 365, 117, 20);
-		frmBensSuperFantastical.getContentPane().add(lblTruck);
+		viewerWindow.getContentPane().add(lblTruck);
 
 		chckbxMonitorClipboard = new JCheckBox("Monitor Clipboard");
 		chckbxMonitorClipboard.setBounds(386, 10, 164, 23);
-		frmBensSuperFantastical.getContentPane().add(chckbxMonitorClipboard);
+		viewerWindow.getContentPane().add(chckbxMonitorClipboard);
 
 		lblTicketInformation = new JLabel("Ticket Information:");
 		lblTicketInformation.setFont(new Font("Tahoma", Font.PLAIN, 20));
 		lblTicketInformation.setBounds(611, 98, 200, 32);
-		frmBensSuperFantastical.getContentPane().add(lblTicketInformation);
+		viewerWindow.getContentPane().add(lblTicketInformation);
 
 		textControl = new JLabel("Control: ");
 		textControl.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textControl.setBounds(611, 135, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textControl);
+		viewerWindow.getContentPane().add(textControl);
 
 		textBefore = new JLabel("Before:");
 		textBefore.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textBefore.setBounds(611, 160, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textBefore);
+		viewerWindow.getContentPane().add(textBefore);
 
 		textTicket = new JLabel("Ticket #:");
 		textTicket.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textTicket.setBounds(611, 185, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textTicket);
+		viewerWindow.getContentPane().add(textTicket);
 
 		textDate = new JLabel("Date: ");
 		textDate.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textDate.setBounds(611, 210, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textDate);
+		viewerWindow.getContentPane().add(textDate);
 
 		textProject = new JLabel("Project: ");
 		textProject.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textProject.setBounds(611, 235, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textProject);
+		viewerWindow.getContentPane().add(textProject);
 
 		textOriginTime = new JLabel("Origin Time: ");
 		textOriginTime.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textOriginTime.setBounds(611, 260, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textOriginTime);
+		viewerWindow.getContentPane().add(textOriginTime);
 
 		textQAMonitor = new JLabel("QA Monitor: ");
 		textQAMonitor.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textQAMonitor.setBounds(611, 285, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textQAMonitor);
+		viewerWindow.getContentPane().add(textQAMonitor);
 
 		textTruck = new JLabel("Truck:");
 		textTruck.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textTruck.setBounds(611, 310, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textTruck);
+		viewerWindow.getContentPane().add(textTruck);
 
 		textSub = new JLabel("Sub:");
 		textSub.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textSub.setBounds(611, 335, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textSub);
+		viewerWindow.getContentPane().add(textSub);
 
 		textSub2 = new JLabel("Sub2:");
 		textSub2.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textSub2.setBounds(611, 360, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textSub2);
+		viewerWindow.getContentPane().add(textSub2);
 
 		textOwner = new JLabel("Owner:");
 		textOwner.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textOwner.setBounds(611, 385, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textOwner);
+		viewerWindow.getContentPane().add(textOwner);
 
 		textType = new JLabel("Type:");
 		textType.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textType.setBounds(611, 410, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textType);
+		viewerWindow.getContentPane().add(textType);
 
 		textSize = new JLabel("Size:");
 		textSize.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textSize.setBounds(611, 435, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textSize);
+		viewerWindow.getContentPane().add(textSize);
 
 		textLatitude = new JLabel("Latitude:");
 		textLatitude.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textLatitude.setBounds(611, 460, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textLatitude);
+		viewerWindow.getContentPane().add(textLatitude);
 
 		textLongitude = new JLabel("Longitude:");
 		textLongitude.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textLongitude.setBounds(611, 485, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textLongitude);
+		viewerWindow.getContentPane().add(textLongitude);
 
 		textVoided = new JLabel("Voided:");
 		textVoided.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		textVoided.setBounds(611, 510, 322, 23);
-		frmBensSuperFantastical.getContentPane().add(textVoided);
+		viewerWindow.getContentPane().add(textVoided);
+		
+		
 	}
 }
