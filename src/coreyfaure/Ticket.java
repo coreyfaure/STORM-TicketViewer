@@ -38,4 +38,9 @@ public class Ticket {
 		this.voided = voided;
 	}
 	
+	static Ticket getNullTicket() {
+		return new Ticket("N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A");
+		
+	}
+	
 }

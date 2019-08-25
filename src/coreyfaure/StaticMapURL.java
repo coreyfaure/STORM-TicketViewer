@@ -7,7 +7,7 @@ public class StaticMapURL {
 	public static URL getURLSatellite(Ticket t, String apikey) throws MalformedURLException {
 		String urlString = "https://maps.googleapis.com/maps/api/staticmap?center="
 				+t.latitude+","+t.longitude
-				+"&zoom=18&size=450x200&maptype=satellite&markers=color:red|label:T|"
+				+"&zoom=18&size=400x200&maptype=satellite&markers=color:red|label:T|"
 				+t.latitude+","+t.longitude
 				+"&key="+apikey;
 		return new URL(urlString);
@@ -15,7 +15,7 @@ public class StaticMapURL {
 	public static URL getURLRoadmap(Ticket t, String apikey) throws MalformedURLException {
 		String urlString = "https://maps.googleapis.com/maps/api/staticmap?center="
 				+t.latitude+","+t.longitude
-				+"&zoom=18&size=450x200&maptype=roadmap&markers=color:red|label:T|"
+				+"&zoom=18&size=400x200&maptype=roadmap&markers=color:red|label:T|"
 				+t.latitude+","+t.longitude
 				+"&key="+apikey;
 		return new URL(urlString);

@@ -11,13 +11,13 @@ import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 
 import java.awt.Font;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -49,6 +49,7 @@ public class TicketViewer {
 	private JLabel lblTicketInformation;
 
 	private static JLabel textControl;
+	private static JLabel textStatus;
 	private static JLabel textBefore;
 	private static JLabel textTicket;
 	private static JLabel textDate;
@@ -71,6 +72,10 @@ public class TicketViewer {
 	private static String imageLinkBefore = "";
 	private static String imageLinkAfter = "";
 	private static String ticketCoords = "";
+	
+	final int c1 = 10;
+	final int c2 = 280;
+	final int c3 = 560;
 
 	/**
 	 * Launch the application.
@@ -182,7 +187,7 @@ public class TicketViewer {
 
 	}
 
-	static void updateView(Ticket t) throws IOException {
+	static void updateView(Ticket t) {
 		lblTicket.setText(t.ticket);
 		lblTruck.setText("Truck " + t.truck);
 		textControl.setText("Control: " + t.control);
@@ -205,16 +210,44 @@ public class TicketViewer {
 		imageLinkBefore = lhPicsPath + t.before + ".jpg";
 		imageLinkAfter = lhPicsPath + t.ticket + ".jpg";
 		ticketCoords = t.latitude+","+t.longitude;
-		lblImage1.setIcon(
-				TicketImporter.getImageIconFromFile(imageLinkBefore, lblImage1.getWidth(), lblImage1.getHeight()));
-		lblImage2.setIcon(
-				TicketImporter.getImageIconFromFile(imageLinkAfter, lblImage2.getWidth(), lblImage2.getHeight()));
-		lblImageCert.setIcon(
-				TicketImporter.getImageIconFromFile(imageLinkCert, lblImageCert.getWidth(), lblImageCert.getHeight()));
-		lblImageTruck.setIcon(TicketImporter.getImageIconFromFile(truckPath + t.truck + ".jpg",
-				lblImageTruck.getWidth(), lblImageTruck.getHeight()));
-		lblImageSatellite.setIcon(new ImageIcon(ImageIO.read(StaticMapURL.getURLSatellite(t, API_KEY))));
-		lblImageRoad.setIcon(new ImageIcon(ImageIO.read(StaticMapURL.getURLRoadmap(t, API_KEY))));
+		try {
+			lblImage1.setIcon(
+					TicketImporter.getImageIconFromFile(imageLinkBefore, lblImage1.getWidth(), lblImage1.getHeight()));
+		} catch (IOException e) {
+			System.out.println("Before cut image missing!");
+		}
+		try {
+			lblImage2.setIcon(
+					TicketImporter.getImageIconFromFile(imageLinkAfter, lblImage2.getWidth(), lblImage2.getHeight()));
+		} catch (IOException e) {
+			System.out.println("After cut image missing!");
+		}
+		try {
+			lblImageCert.setIcon(
+					TicketImporter.getImageIconFromFile(imageLinkCert, lblImageCert.getWidth(), lblImageCert.getHeight()));
+		} catch (IOException e) {
+			System.out.println("Certification missing!");
+		}
+		try {
+			lblImageTruck.setIcon(TicketImporter.getImageIconFromFile(truckPath + t.truck + ".jpg",
+					lblImageTruck.getWidth(), lblImageTruck.getHeight()));
+		} catch (IOException e) {
+			System.out.println("Truck missing!");
+		}
+		try {
+			lblImageSatellite.setIcon(new ImageIcon(ImageIO.read(StaticMapURL.getURLSatellite(t, API_KEY))));
+		} catch (MalformedURLException e) {
+			System.out.println("Invalid URL.");
+		} catch (IOException e) {
+			System.out.println("Error getting sattelite image!");
+		}
+		try {
+			lblImageRoad.setIcon(new ImageIcon(ImageIO.read(StaticMapURL.getURLRoadmap(t, API_KEY))));
+		} catch (MalformedURLException e) {
+			System.out.println("Invalid URL.");
+		} catch (IOException e) {
+			System.out.println("Error getting roadmap image!");
+		}
 
 	}
 
@@ -234,7 +267,7 @@ public class TicketViewer {
 	private void initialize() {
 		viewerWindow = new JFrame();
 		viewerWindow.setTitle("Ticket Information Viewer");
-		viewerWindow.setBounds(100, 100, 1000, 900);
+		viewerWindow.setBounds(100, 100, 840, 900);
 		viewerWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		viewerWindow.getContentPane().setLayout(null);
 
@@ -252,23 +285,22 @@ public class TicketViewer {
 				System.out.println("Searching for ticket: " + text);
 				Ticket t = getTicket(text);
 				if (t != null) {
-					try {
-						updateView(t);
-					} catch (IOException e2) {
-
-					}
+					textStatus.setText("");
+					updateView(t);
 				} else {
-					JOptionPane.showMessageDialog(viewerWindow, "Ticket not found in data file.");
+					updateView(Ticket.getNullTicket());
+					textStatus.setText("<html><font color='red'>TICKET NOT FOUND</font></html>");
+					//JOptionPane.showMessageDialog(viewerWindow, "Ticket not found in data file.");
 				}
 				fieldSearch.setText("");
 			}
 		});
-		btnSearch.setBounds(291, 10, 89, 23);
+		btnSearch.setBounds(c2, 10, 89, 23);
 		viewerWindow.getContentPane().add(btnSearch);
 
 		JLabel lblTicketLabel = new JLabel("Ticket #:");
 		lblTicketLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		lblTicketLabel.setBounds(10, 42, 64, 20);
+		lblTicketLabel.setBounds(c1, 42, 64, 20);
 		viewerWindow.getContentPane().add(lblTicketLabel);
 
 		lblTicket = new JLabel("000000-000000000000");
@@ -278,12 +310,12 @@ public class TicketViewer {
 
 		JLabel lblBeforeImage = new JLabel("Before Image");
 		lblBeforeImage.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		lblBeforeImage.setBounds(10, 73, 162, 20);
+		lblBeforeImage.setBounds(c1, 73, 162, 20);
 		viewerWindow.getContentPane().add(lblBeforeImage);
 
 		JLabel lblAfterImage = new JLabel("After Image");
 		lblAfterImage.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		lblAfterImage.setBounds(291, 73, 130, 20);
+		lblAfterImage.setBounds(c2, 73, 130, 20);
 		viewerWindow.getContentPane().add(lblAfterImage);
 
 		lblImage1 = new JLabel("image1");
@@ -294,11 +326,11 @@ public class TicketViewer {
 				try {
 					Desktop.getDesktop().open(afterBefore);
 				} catch (IOException e1) {
-					e1.printStackTrace();
+					System.out.println("Could not open before image.");
 				}
 			}
 		});
-		lblImage1.setBounds(10, 98, 250, 250);
+		lblImage1.setBounds(c1, 98, 250, 250);
 		viewerWindow.getContentPane().add(lblImage1);
 
 		lblImage2 = new JLabel("image2");
@@ -309,11 +341,11 @@ public class TicketViewer {
 				try {
 					Desktop.getDesktop().open(afterLink);
 				} catch (IOException e1) {
-					e1.printStackTrace();
+					System.out.println("Could not open after image.");
 				}
 			}
 		});
-		lblImage2.setBounds(291, 98, 250, 250);
+		lblImage2.setBounds(c2, 98, 250, 250);
 		viewerWindow.getContentPane().add(lblImage2);
 
 		lblImageCert = new JLabel("cert image");
@@ -324,19 +356,19 @@ public class TicketViewer {
 				try {
 					Desktop.getDesktop().open(certLink);
 				} catch (IOException e1) {
-					e1.printStackTrace();
+					System.out.println("Could not open cert image.");
 				}
 			}
 		});
-		lblImageCert.setBounds(10, 390, 250, 219);
+		lblImageCert.setBounds(c1, 390, 250, 219);
 		viewerWindow.getContentPane().add(lblImageCert);
 
 		lblImageTruck = new JLabel("truck image");
-		lblImageTruck.setBounds(291, 390, 250, 219);
+		lblImageTruck.setBounds(c2, 390, 250, 219);
 		viewerWindow.getContentPane().add(lblImageTruck);
 		
 		lblImageSatellite = new JLabel("satellite image");
-		lblImageSatellite.setBounds(10, 625, 450, 200);
+		lblImageSatellite.setBounds(10, 625, 400, 200);
 		lblImageSatellite.setBorder(BorderFactory.createMatteBorder(
                 1, 1, 1, 1, Color.gray));
 		lblImageSatellite.addMouseListener(new MouseAdapter() {
@@ -346,118 +378,123 @@ public class TicketViewer {
 					try {
 						Desktop.getDesktop().browse(new URI("http://www.google.com/maps/search/"+ticketCoords));
 					} catch (URISyntaxException e1) {
-						e1.printStackTrace();
+						System.out.println("Invalid Maps URI.");
 					}
 				} catch (IOException e1) {
-					e1.printStackTrace();
+					System.out.println("Could not open Maps webpage.");
 				}
 			}
 		});
 		viewerWindow.getContentPane().add(lblImageSatellite);
 		
 		lblImageRoad = new JLabel("road image");
-		lblImageRoad.setBounds(460, 625, 450, 200);
-		lblImageRoad.setBorder(BorderFactory.createMatteBorder(
-                1, 1, 1, 1, Color.gray));
+		lblImageRoad.setBounds(415, 625, 400, 200);
+		lblImageRoad.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.gray));
 		viewerWindow.getContentPane().add(lblImageRoad);
 
 		JLabel lblCert = new JLabel("Certification");
 		lblCert.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		lblCert.setBounds(10, 365, 117, 20);
+		lblCert.setBounds(c1, 365, 117, 20);
 		viewerWindow.getContentPane().add(lblCert);
 
 		lblTruck = new JLabel("Truck");
 		lblTruck.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		lblTruck.setBounds(291, 365, 117, 20);
+		lblTruck.setBounds(c2, 365, 117, 20);
 		viewerWindow.getContentPane().add(lblTruck);
 
 		chckbxMonitorClipboard = new JCheckBox("Monitor Clipboard");
 		chckbxMonitorClipboard.setBounds(386, 10, 164, 23);
 		viewerWindow.getContentPane().add(chckbxMonitorClipboard);
+		
+		textStatus = new JLabel("");
+		textStatus.setFont(new Font("Tahoma", Font.BOLD, 25));
+		textStatus.setBounds(c3,68,322,35);
+		viewerWindow.getContentPane().add(textStatus);
 
 		lblTicketInformation = new JLabel("Ticket Information:");
 		lblTicketInformation.setFont(new Font("Tahoma", Font.PLAIN, 20));
-		lblTicketInformation.setBounds(611, 98, 200, 32);
+		lblTicketInformation.setBounds(c3, 98, 200, 32);
 		viewerWindow.getContentPane().add(lblTicketInformation);
 
 		textControl = new JLabel("Control: ");
 		textControl.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textControl.setBounds(611, 135, 322, 23);
+		textControl.setBounds(c3, 135, 322, 23);
 		viewerWindow.getContentPane().add(textControl);
+		
 
 		textBefore = new JLabel("Before:");
 		textBefore.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textBefore.setBounds(611, 160, 322, 23);
+		textBefore.setBounds(c3, 160, 322, 23);
 		viewerWindow.getContentPane().add(textBefore);
 
 		textTicket = new JLabel("Ticket #:");
 		textTicket.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textTicket.setBounds(611, 185, 322, 23);
+		textTicket.setBounds(c3, 185, 322, 23);
 		viewerWindow.getContentPane().add(textTicket);
 
 		textDate = new JLabel("Date: ");
 		textDate.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textDate.setBounds(611, 210, 322, 23);
+		textDate.setBounds(c3, 210, 322, 23);
 		viewerWindow.getContentPane().add(textDate);
 
 		textProject = new JLabel("Project: ");
 		textProject.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textProject.setBounds(611, 235, 322, 23);
+		textProject.setBounds(c3, 235, 322, 23);
 		viewerWindow.getContentPane().add(textProject);
 
 		textOriginTime = new JLabel("Origin Time: ");
 		textOriginTime.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textOriginTime.setBounds(611, 260, 322, 23);
+		textOriginTime.setBounds(c3, 260, 322, 23);
 		viewerWindow.getContentPane().add(textOriginTime);
 
 		textQAMonitor = new JLabel("QA Monitor: ");
 		textQAMonitor.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textQAMonitor.setBounds(611, 285, 322, 23);
+		textQAMonitor.setBounds(c3, 285, 322, 23);
 		viewerWindow.getContentPane().add(textQAMonitor);
 
 		textTruck = new JLabel("Truck:");
 		textTruck.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textTruck.setBounds(611, 310, 322, 23);
+		textTruck.setBounds(c3, 310, 322, 23);
 		viewerWindow.getContentPane().add(textTruck);
 
 		textSub = new JLabel("Sub:");
 		textSub.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textSub.setBounds(611, 335, 322, 23);
+		textSub.setBounds(c3, 335, 322, 23);
 		viewerWindow.getContentPane().add(textSub);
 
 		textSub2 = new JLabel("Sub2:");
 		textSub2.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textSub2.setBounds(611, 360, 322, 23);
+		textSub2.setBounds(c3, 360, 322, 23);
 		viewerWindow.getContentPane().add(textSub2);
 
 		textOwner = new JLabel("Owner:");
 		textOwner.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textOwner.setBounds(611, 385, 322, 23);
+		textOwner.setBounds(c3, 385, 322, 23);
 		viewerWindow.getContentPane().add(textOwner);
 
 		textType = new JLabel("Type:");
 		textType.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textType.setBounds(611, 410, 322, 23);
+		textType.setBounds(c3, 410, 322, 23);
 		viewerWindow.getContentPane().add(textType);
 
 		textSize = new JLabel("Size:");
 		textSize.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textSize.setBounds(611, 435, 322, 23);
+		textSize.setBounds(c3, 435, 322, 23);
 		viewerWindow.getContentPane().add(textSize);
 
 		textLatitude = new JLabel("Latitude:");
 		textLatitude.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textLatitude.setBounds(611, 460, 322, 23);
+		textLatitude.setBounds(c3, 460, 322, 23);
 		viewerWindow.getContentPane().add(textLatitude);
 
 		textLongitude = new JLabel("Longitude:");
 		textLongitude.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textLongitude.setBounds(611, 485, 322, 23);
+		textLongitude.setBounds(c3, 485, 322, 23);
 		viewerWindow.getContentPane().add(textLongitude);
 
 		textVoided = new JLabel("Voided:");
 		textVoided.setFont(new Font("Tahoma", Font.PLAIN, 14));
-		textVoided.setBounds(611, 510, 322, 23);
+		textVoided.setBounds(c3, 510, 322, 23);
 		viewerWindow.getContentPane().add(textVoided);
 		
 		
